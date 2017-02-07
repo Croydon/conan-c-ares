@@ -1,0 +1,67 @@
+# Try to find c-ares
+# Once done, this will define
+#
+#   CARES_FOUND
+#	CARES_DIR
+#   CARES_INCLUDE_DIRS
+#   CARES_LIBRARIES
+#   CARES_LIBRARY_DIRS
+#	CARES_DEFINITIONS (when using static libraries)
+#
+
+MESSAGE("** CARES ROOT ${CONAN_C-ARES_ROOT}")
+
+# check if static build_command
+if(EXISTS ${CONAN_BIN_DIRS_C-ARES})
+	MESSAGE("c-ares found as a shared library.")
+	set(CARES_USE_STATIC "False")
+else()
+	set(CARES_USE_STATIC "True")
+	MESSAGE("c-ares found as a static library.")
+endif()
+
+SET(CARES_DIR ${CONAN_C-ARES_ROOT})
+SET(CARES_INCLUDE_DIRS ${CONAN_INCLUDE_DIRS_C-ARES})
+SET(CARES_LIBRARY_DIRS ${CONAN_LIB_DIRS_C-ARES})
+
+if(CARES_USE_STATIC)
+	SET(CARES_DEFINITIONS "-DCARES_STATICLIB")
+	if(WIN32)
+		SET(CARES_LIBRARIES "${CARES_LIBRARY_DIRS}/libcares.lib")
+	elseif(APPLE)
+	else()
+	endif()
+else()
+	SET(CARES_BINARY_DIRS ${CONAN_BIN_DIRS_C-ARES})
+	if(WIN32)
+		SET(CARES_LIBRARIES "${CARES_LIBRARY_DIRS}/cares.lib")
+	elseif(APPLE)
+	else()
+	endif()
+endif()
+
+# Comparibility with find_package_handle_standard_args
+SET(CARES_INCLUDE_DIR ${CARES_INCLUDE_DIRS})
+SET(CARES_LIBRARY_DIR ${CARES_LIBRARY_DIRS})
+
+# TODO: move to a version file
+set(CARES_VERSION_STRING "1.12.0")
+
+MESSAGE("** CARES ALREADY FOUND BY CONAN!")
+MESSAGE("** FOUND CARES  ${CARES_LIBRARIES} ${CARES_VERSION_STRING}")
+
+include(FindPackageHandleStandardArgs)
+
+if(CARES_USE_STATIC)
+	find_package_handle_standard_args(CARES
+		REQUIRED_VARS CARES_INCLUDE_DIRS CARES_LIBRARY_DIRS CARES_LIBRARIES CARES_DEFINITIONS
+		VERSION_VAR   CARES_VERSION_STRING
+	)
+else()
+	find_package_handle_standard_args(CARES
+		REQUIRED_VARS CARES_INCLUDE_DIRS CARES_LIBRARY_DIRS CARES_LIBRARIES CARES_BINARY_DIRS
+		VERSION_VAR   CARES_VERSION_STRING
+	)
+endif()
+
+mark_as_advanced(CARES_INCLUDE_DIRS CARES_LIBRARY_DIRS CARES_LIBRARIES CARES_DEFINITIONS CARES_BINARY_DIRS CARES_VERSION_STRING)
