@@ -9,7 +9,7 @@ class caresConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
     options = {"shared": [True, False]}
     default_options = "shared=True"
-    exports = ["CARESConfig.cmake"]
+    exports = ["FindCARES.cmake"]
     build_policy = "missing"
     url="https://github.com/lhcorralo/conan-c-ares"
     license="https://c-ares.haxx.se/license.html"
@@ -29,26 +29,33 @@ class caresConan(ConanFile):
             self.run("chmod +x ./%s/configure" % self.ZIP_FOLDER_NAME)
 
     def build(self):
+    
+        self.output.info("c-ares build:")
+        self.output.info("Shared? %s" % self.options.shared)
+        
         # Use configure && make in linux and Macos, and nmake in windows
         env = ConfigureEnvironment(self.deps_cpp_info, self.settings)
         if self.settings.os == "Linux" or self.settings.os == "Macos":
             self.run("cd %s && %s ./configure" % (self.ZIP_FOLDER_NAME, env.command_line_env))
             self.run("cd %s && %s make" % (self.ZIP_FOLDER_NAME, env.command_line_env))
         else:
+            # Generate the cmake options
+            nmake_options="CFG="
+            nmake_options += "dll-" if self.options.shared else "lib-"
+            nmake_options += "debug" if self.settings.build_type == "Debug" else "release"
+            # Check if it must be built using static CRT
+            if(self.settings.compiler.runtime == "MT" or self.settings.compiler.runtime == "MTd"):
+                nmake_options += " RTLIBCFG=static"
+            
             # command_line_env comes with /. In Windows, \ are used
-            if self.options.shared:
-                cfg = "dll-debug" if self.settings.build_type == "Debug" else "dll-release"
-                command = ('%s && cd %s && buildconf.bat' % (env.command_line_env, self.ZIP_FOLDER_NAME)) \
-                + ('&& nmake /f Makefile.msvc CFG=%s' % cfg)
-            else:
-                cfg = "lib-debug" if self.settings.build_type == "Debug" else "lib-release"
-                command = ('%s && cd %s && buildconf.bat' % (env.command_line_env, self.ZIP_FOLDER_NAME)) \
-                + ('&& nmake /f Makefile.msvc CFG=%s' % cfg)
+            self.output.info(nmake_options)
+            command = ('%s && cd %s && buildconf.bat && nmake /f Makefile.msvc %s' \
+                % (env.command_line_env, self.ZIP_FOLDER_NAME, nmake_options))
             self.run(command)
 
     def package(self):
         # Copy CARESConfig.cmake to package
-        self.copy("CARESConfig.cmake", dst=".", src=".", keep_path=False)
+        self.copy("FindCARES.cmake", dst=".", src=".", keep_path=False)
         
         # Copying headers
         self.copy(pattern="*.h", dst="include", src=self.ZIP_FOLDER_NAME, keep_path=False)
