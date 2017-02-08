@@ -11,7 +11,7 @@ class caresConan(ConanFile):
     default_options = "shared=True"
     exports = ["CARESConfig.cmake"]
     build_policy = "missing"
-    url="https://c-ares.haxx.se"
+    url="https://github.com/lhcorralo/conan-c-ares"
     license="https://c-ares.haxx.se/license.html"
     description="c-ares test Conan package"
     
@@ -55,14 +55,10 @@ class caresConan(ConanFile):
         
         # Copying static and dynamic libs
         if self.settings.os == "Windows":
-            print "set option shared? %s" % self.options.shared
-            print "copying from %s" % self.ZIP_FOLDER_NAME
             if self.options.shared:
-                print "set option shared to true"
                 self.copy(pattern="*.lib", dst="lib", src=self.ZIP_FOLDER_NAME, keep_path=False)
                 self.copy(pattern="*.dll", dst="bin", src=self.ZIP_FOLDER_NAME, keep_path=False)
             else:
-                print "set option shared to false"
                 self.copy(pattern="*.lib", dst="lib", src=self.ZIP_FOLDER_NAME, keep_path=False)
         else:
             if self.settings.os == "Macos":
@@ -72,15 +68,10 @@ class caresConan(ConanFile):
             self.copy(pattern="*.a", dst="lib", src=self.ZIP_FOLDER_NAME, keep_path=False)
 
     def package_info(self):
-    
-        print "Package settings.os %s" % self.settings.os
-        print "Package settings.build_type %s" % self.settings.build_type
         # Define the libraries
         if self.settings.os == "Windows":
-            print "Package settings.os set to windows"
             self.cpp_info.libs = ['cares'] if self.options.shared else ['libcares']
             if self.settings.build_type == "Debug":
-                print "Package settings.build_type set to debug"
                 self.cpp_info.libs[0] += "d"
             self.cpp_info.libs.append('Ws2_32')
             # self.cpp_info.libs.append('wsock32')
