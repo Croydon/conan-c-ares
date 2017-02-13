@@ -2,8 +2,8 @@ from conans import ConanFile, CMake
 import os
 
 # This easily allows to copy the package in other user or channel
+username = os.getenv("CONAN_USERNAME", "lhcorralo")
 channel = os.getenv("CONAN_CHANNEL", "testing")
-username = os.getenv("CONAN_USERNAME", "demo")
 
 class caresReuseConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
