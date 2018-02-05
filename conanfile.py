@@ -6,7 +6,6 @@ import os
 class caresConan(ConanFile):
     name = "c-ares"
     version = "1.12.0"
-    ZIP_FOLDER_NAME = "c-ares-cares-%s" % version.replace(".", "_")
     settings = "os", "arch", "compiler", "build_type"
     options = {"shared": [True, False]}
     default_options = "shared=False"
@@ -15,6 +14,7 @@ class caresConan(ConanFile):
     url = "https://github.com/lhcorralo/conan-c-ares"
     license = "https://c-ares.haxx.se/license.html"
     description = "c-ares test Conan package"
+    ZIP_FOLDER_NAME = "c-ares-cares-%s" % version.replace(".", "_")
 
     def config(self):
         # No specific config
@@ -40,7 +40,11 @@ class caresConan(ConanFile):
 
         if self.settings.os == "Linux" or self.settings.os == "Macos":
             with tools.environment_append(envvars):
-                self.run("cd %s && ./configure" % (self.ZIP_FOLDER_NAME))
+                if self.options.shared:
+                    self.run("cd %s && ./configure" % (self.ZIP_FOLDER_NAME))
+                else:
+                    self.run("cd %s && ./configure --disable-shared" % (self.ZIP_FOLDER_NAME))
+
                 self.run("cd %s && make" % (self.ZIP_FOLDER_NAME))
         else:
             # Generate the cmake options
