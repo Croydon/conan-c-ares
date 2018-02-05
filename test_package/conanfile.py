@@ -2,7 +2,7 @@ from conans import ConanFile, CMake
 import os
 
 # This easily allows to copy the package in other user or channel
-username = os.getenv("CONAN_USERNAME", "croydon")
+username = os.getenv("CONAN_USERNAME", "inexorgame")
 channel = os.getenv("CONAN_CHANNEL", "testing")
 
 
