@@ -1,4 +1,4 @@
-from conans import ConanFile, ConfigureEnvironment
+from conans import ConanFile, AutoToolsBuildEnvironment, tools
 from conans.tools import download, unzip
 import os
 
@@ -14,7 +14,7 @@ class caresConan(ConanFile):
     build_policy = "missing"
     url = "https://github.com/lhcorralo/conan-c-ares"
     license = "https://c-ares.haxx.se/license.html"
-    description="c-ares test Conan package"
+    description = "c-ares test Conan package"
 
     def config(self):
         # No specific config
@@ -35,13 +35,16 @@ class caresConan(ConanFile):
         self.output.info("Shared? %s" % self.options.shared)
 
         # Use configure && make in linux and Macos, and nmake in windows
-        env = ConfigureEnvironment(self.deps_cpp_info, self.settings)
+        env = AutoToolsBuildEnvironment(self)
+        envvars = env.vars
+
         if self.settings.os == "Linux" or self.settings.os == "Macos":
-            self.run("cd %s && %s ./configure" % (self.ZIP_FOLDER_NAME, env.command_line_env))
-            self.run("cd %s && %s make" % (self.ZIP_FOLDER_NAME, env.command_line_env))
+            with tools.environment_append(envvars):
+                self.run("cd %s && ./configure" % (self.ZIP_FOLDER_NAME))
+                self.run("cd %s && make" % (self.ZIP_FOLDER_NAME))
         else:
             # Generate the cmake options
-            nmake_options="CFG="
+            nmake_options = "CFG="
             nmake_options += "dll-" if self.options.shared else "lib-"
             nmake_options += "debug" if self.settings.build_type == "Debug" else "release"
             # Check if it must be built using static CRT
@@ -50,9 +53,10 @@ class caresConan(ConanFile):
 
             # command_line_env comes with /. In Windows, \ are used
             self.output.info(nmake_options)
-            command = ('%s && cd %s && buildconf.bat && nmake /f Makefile.msvc %s' \
-                % (env.command_line_env, self.ZIP_FOLDER_NAME, nmake_options))
-            self.run(command)
+            with tools.environment_append(envvars):
+                command = ('cd %s && buildconf.bat && nmake /f Makefile.msvc %s' \
+                % (self.ZIP_FOLDER_NAME, nmake_options))
+                self.run(command)
 
     def package(self):
         # Copy CARESConfig.cmake to package
