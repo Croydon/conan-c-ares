@@ -13,7 +13,7 @@ class caresReuseConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        self.run('cmake "%s" %s' % (self.build_folder, cmake.command_line))
+        self.run('cmake "%s" %s' % (self.source_folder, cmake.command_line))
         self.run("cmake --build . %s" % cmake.build_config)
 
     def imports(self):

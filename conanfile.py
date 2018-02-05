@@ -9,7 +9,7 @@ class caresConan(ConanFile):
     ZIP_FOLDER_NAME = "c-ares-cares-%s" % version.replace(".", "_")
     settings = "os", "arch", "compiler", "build_type"
     options = {"shared": [True, False]}
-    default_options = "shared=True"
+    default_options = "shared=False"
     exports = ["FindCARES.cmake"]
     build_policy = "missing"
     url = "https://github.com/lhcorralo/conan-c-ares"
