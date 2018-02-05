@@ -2,6 +2,7 @@ from conans import ConanFile, ConfigureEnvironment
 from conans.tools import download, unzip
 import os
 
+
 class caresConan(ConanFile):
     name = "c-ares"
     version = "1.12.0"
@@ -11,10 +12,10 @@ class caresConan(ConanFile):
     default_options = "shared=True"
     exports = ["FindCARES.cmake"]
     build_policy = "missing"
-    url="https://github.com/lhcorralo/conan-c-ares"
-    license="https://c-ares.haxx.se/license.html"
+    url = "https://github.com/lhcorralo/conan-c-ares"
+    license = "https://c-ares.haxx.se/license.html"
     description="c-ares test Conan package"
-    
+
     def config(self):
         # No specific config
         pass
@@ -29,10 +30,10 @@ class caresConan(ConanFile):
             self.run("chmod +x ./%s/configure" % self.ZIP_FOLDER_NAME)
 
     def build(self):
-    
+
         self.output.info("c-ares build:")
         self.output.info("Shared? %s" % self.options.shared)
-        
+
         # Use configure && make in linux and Macos, and nmake in windows
         env = ConfigureEnvironment(self.deps_cpp_info, self.settings)
         if self.settings.os == "Linux" or self.settings.os == "Macos":
@@ -46,7 +47,7 @@ class caresConan(ConanFile):
             # Check if it must be built using static CRT
             if(self.settings.compiler.runtime == "MT" or self.settings.compiler.runtime == "MTd"):
                 nmake_options += " RTLIBCFG=static"
-            
+
             # command_line_env comes with /. In Windows, \ are used
             self.output.info(nmake_options)
             command = ('%s && cd %s && buildconf.bat && nmake /f Makefile.msvc %s' \
@@ -56,10 +57,10 @@ class caresConan(ConanFile):
     def package(self):
         # Copy CARESConfig.cmake to package
         self.copy("FindCARES.cmake", dst=".", src=".", keep_path=False)
-        
+
         # Copying headers
         self.copy(pattern="*.h", dst="include", src=self.ZIP_FOLDER_NAME, keep_path=False)
-        
+
         # Copying static and dynamic libs
         if self.settings.os == "Windows":
             if self.options.shared:
@@ -84,8 +85,7 @@ class caresConan(ConanFile):
             # self.cpp_info.libs.append('wsock32')
         else:
             pass
-            
+
         # Definitions for static build
         if not self.options.shared:
             self.cpp_info.defines.append("CARES_STATICLIB=1")
-        
