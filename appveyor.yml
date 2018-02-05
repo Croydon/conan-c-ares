@@ -5,11 +5,11 @@ environment:
     PYTHON_VERSION: "2.7.8"
     PYTHON_ARCH: "32"
 
-    CONAN_REFERENCE: "c-ares/1.12.0"
+    CONAN_REFERENCE: "c-ares/1.13.0"
     CONAN_USERNAME: "inexorgame"
     CONAN_LOGIN_USERNAME: "inexorgame"
     CONAN_CHANNEL: "testing"
-    
+
     matrix:
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
           CONAN_VISUAL_VERSIONS: 12

@@ -1,11 +1,11 @@
-from conans import ConanFile, AutoToolsBuildEnvironment, tools
+from conans import ConanFile, AutoToolsBuildEnvironment, tools, CMake
 from conans.tools import download, unzip
 import os
 
 
 class caresConan(ConanFile):
     name = "c-ares"
-    version = "1.12.0"
+    version = "1.13.0"
     settings = "os", "arch", "compiler", "build_type"
     options = {"shared": [True, False]}
     default_options = "shared=False"
@@ -26,8 +26,8 @@ class caresConan(ConanFile):
         download("https://github.com/c-ares/c-ares/archive/%s" % zip_name, zip_name, verify=True)
         unzip(zip_name)
         os.unlink(zip_name)
-        if self.settings.os != "Windows":
-            self.run("chmod +x ./%s/configure" % self.ZIP_FOLDER_NAME)
+        #  if self.settings.os != "Windows":
+            #  self.run("chmod +x ./%s/configure" % self.ZIP_FOLDER_NAME)
 
     def build(self):
 
@@ -40,12 +40,32 @@ class caresConan(ConanFile):
 
         if self.settings.os == "Linux" or self.settings.os == "Macos":
             with tools.environment_append(envvars):
-                if self.options.shared:
-                    self.run("cd %s && ./configure" % (self.ZIP_FOLDER_NAME))
-                else:
-                    self.run("cd %s && ./configure --disable-shared" % (self.ZIP_FOLDER_NAME))
+                # the following lines are directly from
+                # https://github.com/c-ares/c-ares/blob/b0aebb95152d5871531e1dc3ffb7dd6910c7ec38/travis/build.sh
+                # self.run("cd %s" % (self.ZIP_FOLDER_NAME))
+                # self.run("mkdir cmakebld && cd cmakebld")
+                builddir = "%s/cmakebld" % self.ZIP_FOLDER_NAME
 
-                self.run("cd %s && make" % (self.ZIP_FOLDER_NAME))
+                args = ["-DCMAKE_BUILD_TYPE=%s" % ("DEBUG" if self.settings.build_type == "Debug" else "RELEASE")]
+                args += ["-DCARES_STATIC=%s" % ("OFF" if self.options.shared else "ON")]
+                args += ["-DCARES_STATIC_PIC=ON"]
+
+                cmake = CMake(self)
+                self.run('cmake "%s" %s %s' % (self.ZIP_FOLDER_NAME, cmake.command_line, " ".join(args)))
+                self.run("make")
+                self.run("./bin/adig www.google.com")
+                self.run("./bin/acountry www.google.com")
+                self.run("./bin/ahost www.google.com")
+                self.run("ls -R")
+                # self.run("cd ..")
+                # self.run("ls")
+
+                #if self.options.shared:
+                    #self.run("cd %s && ./configure" % (self.ZIP_FOLDER_NAME))
+                #else:
+                    # self.run("cd %s && ./configure --disable-shared" % (self.ZIP_FOLDER_NAME))
+
+                # self.run("cd %s && make" % (self.ZIP_FOLDER_NAME))
         else:
             # Generate the cmake options
             nmake_options = "CFG="
@@ -77,11 +97,9 @@ class caresConan(ConanFile):
             else:
                 self.copy(pattern="*.lib", dst="lib", src=self.ZIP_FOLDER_NAME, keep_path=False)
         else:
-            if self.settings.os == "Macos":
-                self.copy(pattern="*.dylib", dst="bin", keep_path=False)
-            else:
-                self.copy(pattern="*.so*", dst="bin", src=self.ZIP_FOLDER_NAME, keep_path=False)
-            self.copy(pattern="*.a", dst="lib", src=self.ZIP_FOLDER_NAME, keep_path=False)
+            self.copy(pattern="*.dylib", dst="bin", src="lib", keep_path=False)
+            self.copy(pattern="*.so*", dst="bin", src="lib", keep_path=False)
+            self.copy(pattern="*.a", dst="lib", src="lib", keep_path=False)
 
     def package_info(self):
         # Define the libraries

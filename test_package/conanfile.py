@@ -8,7 +8,7 @@ channel = os.getenv("CONAN_CHANNEL", "testing")
 
 class caresReuseConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    requires = "c-ares/1.12.0@%s/%s" % (username, channel)
+    requires = "c-ares/1.13.0@%s/%s" % (username, channel)
     generators = "cmake"
 
     def build(self):
