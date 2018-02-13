@@ -16,7 +16,6 @@ class caresConan(ConanFile):
     generators = "cmake"
     ZIP_FOLDER_NAME = "c-ares-cares-%s" % version.replace(".", "_")
 
-
     def source(self):
         zip_name = "cares-%s.tar.gz" % self.version.replace(".", "_")
         download("https://github.com/c-ares/c-ares/archive/%s" % zip_name, zip_name, verify=True)

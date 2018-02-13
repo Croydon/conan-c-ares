@@ -15,12 +15,16 @@ class caresReuseConan(ConanFile):
         cmake = CMake(self)
         self.run('cmake "%s" %s' % (self.source_folder, cmake.command_line))
         self.run("cmake --build . %s" % cmake.build_config)
+        # pass
 
     def imports(self):
         # Copy shared libraries
         self.copy(pattern="*.dll", dst="bin", src="bin")
         self.copy(pattern="*.dylib", dst="bin", src="lib")
+        self.copy("*", "bin", "bin")
 
     def test(self):
         # equal to ./bin/greet, but portable win: .\bin\greet
-        self.run(os.sep.join([".","bin", "ahost.exe 127.0.0.1"]))
+        self.run(os.sep.join([".", "bin", "ahost.exe 127.0.0.1"]))
+        self.run(os.sep.join([".", "bin", "adig 127.0.0.1"]))
+        self.run(os.sep.join([".", "bin", "acountry 127.0.0.1"]))
