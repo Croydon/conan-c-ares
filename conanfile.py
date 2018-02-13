@@ -49,9 +49,9 @@ class caresConan(ConanFile):
                 args += ['-G "Unix Makefiles"']
                 self.run('cmake "%s" %s %s' % (self.ZIP_FOLDER_NAME, cmake.command_line, " ".join(args)))
                 self.run("make")
-                self.run("./bin/adig www.google.com")
-                self.run("./bin/acountry www.google.com")
-                self.run("./bin/ahost www.google.com")
+                # self.run("./bin/adig www.google.com")
+                # self.run("./bin/acountry www.google.com")
+                # self.run("./bin/ahost www.google.com")
                 self.run("ls lib/")
 
             else:
