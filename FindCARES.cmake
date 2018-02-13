@@ -1,6 +1,6 @@
 find_path(CARES_INCLUDE_DIR NAMES ares.h PATHS ${CONAN_INCLUDE_DIRS_C-ARES})
 # This will also look for Ws2_32.lib in Windows, but PATHS are forced, so no problem.
-find_library(CARES_LIBRARY NAMES cares.lib libcares.so PATHS ${CONAN_LIB_DIRS_C-ARES})
+find_library(CARES_LIBRARY NAMES cares.lib cares.dll libcares.so libcares.a libcares.dylib PATHS ${CONAN_LIB_DIRS_C-ARES})
 
 if(NOT EXISTS ${CONAN_BIN_DIRS_C-ARES})
 	SET(CARES_DEFINITIONS "-DCARES_STATICLIB")

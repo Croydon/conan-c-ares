@@ -42,7 +42,6 @@ class caresConan(ConanFile):
             args += ["-DCARES_STATIC=%s" % ("OFF" if self.options.shared else "ON")]
             args += ["-DCARES_SHARED=%s" % ("ON" if self.options.shared else "OFF")]
             args += ["-DCARES_STATIC_PIC=ON"]
-            args += ["-DCARES_INSTALL=ON"]
 
             cmake = CMake(self)
 
@@ -53,9 +52,7 @@ class caresConan(ConanFile):
                 self.run("./bin/adig www.google.com")
                 self.run("./bin/acountry www.google.com")
                 self.run("./bin/ahost www.google.com")
-                self.run("ls -R")
-                # self.run("cd ..")
-                # self.run("ls")
+                self.run("ls lib/")
 
             else:
                 args += ['-G "NMake Makefiles"']
@@ -86,10 +83,10 @@ class caresConan(ConanFile):
         self.copy(pattern="*.h", dst="include", src=self.ZIP_FOLDER_NAME, keep_path=False)
 
         # Copying static and dynamic libs
-        self.copy(pattern="*.dll", dst="bin", src="lib", keep_path=False)
-        self.copy(pattern="*.dylib", dst="bin", src="lib", keep_path=False)
+        self.copy(pattern="*.dll", dst="lib", src="bin", keep_path=False)
+        self.copy(pattern="*.dylib", dst="lib", src="lib", keep_path=False)
         self.copy(pattern="*.lib", dst="lib", src="lib", keep_path=False)
-        self.copy(pattern="*.so*", dst="bin", src="lib", keep_path=False)
+        self.copy(pattern="*.so*", dst="lib", src="lib", keep_path=False)
         self.copy(pattern="*.a", dst="lib", src="lib", keep_path=False)
 
     # def package_info(self):
