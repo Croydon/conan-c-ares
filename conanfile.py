@@ -10,27 +10,20 @@ class caresConan(ConanFile):
     options = {"shared": [True, False]}
     default_options = "shared=False"
     exports = ["FindCARES.cmake"]
-    build_policy = "missing"
-    url = "https://github.com/lhcorralo/conan-c-ares"
+    url = "https://github.com/Croydon/conan-c-ares"
     license = "https://c-ares.haxx.se/license.html"
-    description = "c-ares test Conan package"
+    description = "A C library for asynchronous DNS requests"
+    generators = "cmake"
     ZIP_FOLDER_NAME = "c-ares-cares-%s" % version.replace(".", "_")
 
-    def config(self):
-        # No specific config
-        pass
 
     def source(self):
-        # The file is extracted from github. The official release does not have the file msvc_ver.inc, and it does not compile under windows
         zip_name = "cares-%s.tar.gz" % self.version.replace(".", "_")
         download("https://github.com/c-ares/c-ares/archive/%s" % zip_name, zip_name, verify=True)
         unzip(zip_name)
         os.unlink(zip_name)
-        #  if self.settings.os != "Windows":
-            #  self.run("chmod +x ./%s/configure" % self.ZIP_FOLDER_NAME)
 
     def build(self):
-
         self.output.info("c-ares build:")
         self.output.info("Shared? %s" % self.options.shared)
 
@@ -38,19 +31,23 @@ class caresConan(ConanFile):
         env = AutoToolsBuildEnvironment(self)
         envvars = env.vars
 
-        if self.settings.os == "Linux" or self.settings.os == "Macos":
-            with tools.environment_append(envvars):
-                # the following lines are directly from
-                # https://github.com/c-ares/c-ares/blob/b0aebb95152d5871531e1dc3ffb7dd6910c7ec38/travis/build.sh
-                # self.run("cd %s" % (self.ZIP_FOLDER_NAME))
-                # self.run("mkdir cmakebld && cd cmakebld")
-                builddir = "%s/cmakebld" % self.ZIP_FOLDER_NAME
+        with tools.environment_append(envvars):
+            # the following lines are directly from
+            # https://github.com/c-ares/c-ares/blob/b0aebb95152d5871531e1dc3ffb7dd6910c7ec38/travis/build.sh
+            # self.run("cd %s" % (self.ZIP_FOLDER_NAME))
+            # self.run("mkdir cmakebld && cd cmakebld")
+            # builddir = "%s/build" % self.ZIP_FOLDER_NAME
 
-                args = ["-DCMAKE_BUILD_TYPE=%s" % ("DEBUG" if self.settings.build_type == "Debug" else "RELEASE")]
-                args += ["-DCARES_STATIC=%s" % ("OFF" if self.options.shared else "ON")]
-                args += ["-DCARES_STATIC_PIC=ON"]
+            args = ["-DCMAKE_BUILD_TYPE=%s" % ("DEBUG" if self.settings.build_type == "Debug" else "RELEASE")]
+            args += ["-DCARES_STATIC=%s" % ("OFF" if self.options.shared else "ON")]
+            args += ["-DCARES_SHARED=%s" % ("ON" if self.options.shared else "OFF")]
+            args += ["-DCARES_STATIC_PIC=ON"]
+            args += ["-DCARES_INSTALL=ON"]
 
-                cmake = CMake(self)
+            cmake = CMake(self)
+
+            if self.settings.os == "Linux" or self.settings.os == "Macos":
+                args += ['-G "Unix Makefiles"']
                 self.run('cmake "%s" %s %s' % (self.ZIP_FOLDER_NAME, cmake.command_line, " ".join(args)))
                 self.run("make")
                 self.run("./bin/adig www.google.com")
@@ -60,58 +57,52 @@ class caresConan(ConanFile):
                 # self.run("cd ..")
                 # self.run("ls")
 
-                #if self.options.shared:
-                    #self.run("cd %s && ./configure" % (self.ZIP_FOLDER_NAME))
-                #else:
-                    # self.run("cd %s && ./configure --disable-shared" % (self.ZIP_FOLDER_NAME))
+            else:
+                args += ['-G "NMake Makefiles"']
 
-                # self.run("cd %s && make" % (self.ZIP_FOLDER_NAME))
-        else:
+                self.run('cmake "%s" %s %s' % (self.ZIP_FOLDER_NAME, cmake.command_line, " ".join(args)))
+                self.run("nmake")
+
             # Generate the cmake options
-            nmake_options = "CFG="
-            nmake_options += "dll-" if self.options.shared else "lib-"
-            nmake_options += "debug" if self.settings.build_type == "Debug" else "release"
+            # nmake_options = "CFG="
+            # nmake_options += "dll-" if self.options.shared else "lib-"
+            # nmake_options += "debug" if self.settings.build_type == "Debug" else "release"
             # Check if it must be built using static CRT
-            if(self.settings.compiler.runtime == "MT" or self.settings.compiler.runtime == "MTd"):
-                nmake_options += " RTLIBCFG=static"
+            # if(self.settings.compiler.runtime == "MT" or self.settings.compiler.runtime == "MTd"):
+            #    nmake_options += " RTLIBCFG=static"
 
             # command_line_env comes with /. In Windows, \ are used
-            self.output.info(nmake_options)
-            with tools.environment_append(envvars):
-                command = ('cd %s && buildconf.bat && nmake /f Makefile.msvc %s' \
-                % (self.ZIP_FOLDER_NAME, nmake_options))
-                self.run(command)
+            # self.output.info(nmake_options)
+            # with tools.environment_append(envvars):
+                # command = ('cd %s && buildconf.bat && nmake /f Makefile.msvc %s' \
+                # % (self.ZIP_FOLDER_NAME, nmake_options))
+                # self.run(command)
 
     def package(self):
-        # Copy CARESConfig.cmake to package
         self.copy("FindCARES.cmake", dst=".", src=".", keep_path=False)
-
-        # Copying headers
+        self.copy("c-ares-config.cmake", dst=".", src=".", keep_path=False)
+        self.copy("ares_build.h", dst="include", src=".", keep_path=False)
+        self.copy("ares_config.h", dst="include", src=".", keep_path=False)
         self.copy(pattern="*.h", dst="include", src=self.ZIP_FOLDER_NAME, keep_path=False)
 
         # Copying static and dynamic libs
-        if self.settings.os == "Windows":
-            if self.options.shared:
-                self.copy(pattern="*.lib", dst="lib", src=self.ZIP_FOLDER_NAME, keep_path=False)
-                self.copy(pattern="*.dll", dst="bin", src=self.ZIP_FOLDER_NAME, keep_path=False)
-            else:
-                self.copy(pattern="*.lib", dst="lib", src=self.ZIP_FOLDER_NAME, keep_path=False)
-        else:
-            self.copy(pattern="*.dylib", dst="bin", src="lib", keep_path=False)
-            self.copy(pattern="*.so*", dst="bin", src="lib", keep_path=False)
-            self.copy(pattern="*.a", dst="lib", src="lib", keep_path=False)
+        self.copy(pattern="*.dll", dst="bin", src="lib", keep_path=False)
+        self.copy(pattern="*.dylib", dst="bin", src="lib", keep_path=False)
+        self.copy(pattern="*.lib", dst="lib", src="lib", keep_path=False)
+        self.copy(pattern="*.so*", dst="bin", src="lib", keep_path=False)
+        self.copy(pattern="*.a", dst="lib", src="lib", keep_path=False)
 
-    def package_info(self):
+    # def package_info(self):
         # Define the libraries
-        if self.settings.os == "Windows":
-            self.cpp_info.libs = ['cares'] if self.options.shared else ['libcares']
-            if self.settings.build_type == "Debug":
-                self.cpp_info.libs[0] += "d"
-            self.cpp_info.libs.append('Ws2_32')
+        # if self.settings.os == "Windows":
+            # self.cpp_info.libs = ['cares'] if self.options.shared else ['libcares']
+            # if self.settings.build_type == "Debug":
+            #     self.cpp_info.libs[0] += "d"
+            # self.cpp_info.libs.append('Ws2_32')
             # self.cpp_info.libs.append('wsock32')
-        else:
-            pass
+        # else:
+            # pass
 
         # Definitions for static build
-        if not self.options.shared:
-            self.cpp_info.defines.append("CARES_STATICLIB=1")
+        # if not self.options.shared:
+            # self.cpp_info.defines.append("CARES_STATICLIB=1")
