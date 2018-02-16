@@ -59,6 +59,9 @@ class caresConan(ConanFile):
                 self.run('cmake "%s" %s %s' % (self.ZIP_FOLDER_NAME, cmake.command_line, " ".join(args)))
                 self.run("nmake")
 
+            # fix path that third-party applications can find c-ares
+            tools.replace_in_file("c-ares-config.cmake", '''get_filename_component(PACKAGE_PREFIX_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)''', '''get_filename_component(PACKAGE_PREFIX_DIR "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)''')
+
             # Generate the cmake options
             # nmake_options = "CFG="
             # nmake_options += "dll-" if self.options.shared else "lib-"
@@ -87,6 +90,18 @@ class caresConan(ConanFile):
         self.copy(pattern="*.lib", dst="lib", src="lib", keep_path=False)
         self.copy(pattern="*.so*", dst="lib", src="lib", keep_path=False)
         self.copy(pattern="*.a", dst="lib", src="lib", keep_path=False)
+
+        cmake_folder = "{}/cmake/c-ares".format(self.get_install_lib_path())
+        self.copy("c-ares-targets.cmake", dst=".", src=cmake_folder)
+        self.copy("c-ares-targets-{}.cmake".format("debug" if self.settings.build_type == "Debug" else "release"), dst=".", src=cmake_folder)
+
+    def get_install_lib_path(self):
+        install_path = "{}/install".format(self.build_folder)
+        if os.path.isfile("{}/lib/cmake/c-ares/c-ares-targets.cmake".format(install_path)):
+            return "{}/lib".format(install_path)
+        elif os.path.isfile("{}/lib64/cmake/c-ares/c-ares-targets.cmake".format(install_path)):
+            return "{}/lib64".format(install_path)
+        # its "{}/install/{{lib|lib64}}/cmake/gRPC/gRPCTargets.cmake".format(self.build_folder)
 
     # def package_info(self):
         # Define the libraries
