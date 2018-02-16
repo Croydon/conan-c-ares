@@ -5,7 +5,7 @@ import os
 
 class caresConan(ConanFile):
     name = "c-ares"
-    version = "1.13.0"
+    version = "1.14.0"
     settings = "os", "arch", "compiler", "build_type"
     options = {"shared": [True, False]}
     default_options = "shared=False"
@@ -15,7 +15,6 @@ class caresConan(ConanFile):
     description = "A C library for asynchronous DNS requests"
     generators = "cmake"
     ZIP_FOLDER_NAME = "c-ares-cares-%s" % version.replace(".", "_")
-
 
     def source(self):
         zip_name = "cares-%s.tar.gz" % self.version.replace(".", "_")
