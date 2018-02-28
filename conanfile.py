@@ -26,56 +26,15 @@ class caresConan(ConanFile):
         self.output.info("c-ares build:")
         self.output.info("Shared? %s" % self.options.shared)
 
-        # Use configure && make in linux and Macos, and nmake in windows
-        env = AutoToolsBuildEnvironment(self)
-        envvars = env.vars
-
-        with tools.environment_append(envvars):
-            # the following lines are directly from
-            # https://github.com/c-ares/c-ares/blob/b0aebb95152d5871531e1dc3ffb7dd6910c7ec38/travis/build.sh
-            # self.run("cd %s" % (self.ZIP_FOLDER_NAME))
-            # self.run("mkdir cmakebld && cd cmakebld")
-            # builddir = "%s/build" % self.ZIP_FOLDER_NAME
-
-            args = ["-DCMAKE_BUILD_TYPE=%s" % ("DEBUG" if self.settings.build_type == "Debug" else "RELEASE")]
-            args += ["-DCARES_STATIC=%s" % ("OFF" if self.options.shared else "ON")]
-            args += ["-DCARES_SHARED=%s" % ("ON" if self.options.shared else "OFF")]
-            args += ["-DCARES_STATIC_PIC=ON"]
-
-            cmake = CMake(self)
-
-            if self.settings.os == "Linux" or self.settings.os == "Macos":
-                args += ['-G "Unix Makefiles"']
-                self.run('cmake "%s" %s %s' % (self.ZIP_FOLDER_NAME, cmake.command_line, " ".join(args)))
-                self.run("make")
-                # self.run("./bin/adig www.google.com")
-                # self.run("./bin/acountry www.google.com")
-                # self.run("./bin/ahost www.google.com")
-                self.run("ls lib/")
-
-            else:
-                args += ['-G "NMake Makefiles"']
-
-                self.run('cmake "%s" %s %s' % (self.ZIP_FOLDER_NAME, cmake.command_line, " ".join(args)))
-                self.run("nmake")
-
-            # fix path that third-party applications can find c-ares
-            tools.replace_in_file("c-ares-config.cmake", '''get_filename_component(PACKAGE_PREFIX_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)''', '''get_filename_component(PACKAGE_PREFIX_DIR "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)''')
-
-            # Generate the cmake options
-            # nmake_options = "CFG="
-            # nmake_options += "dll-" if self.options.shared else "lib-"
-            # nmake_options += "debug" if self.settings.build_type == "Debug" else "release"
-            # Check if it must be built using static CRT
-            # if(self.settings.compiler.runtime == "MT" or self.settings.compiler.runtime == "MTd"):
-            #    nmake_options += " RTLIBCFG=static"
-
-            # command_line_env comes with /. In Windows, \ are used
-            # self.output.info(nmake_options)
-            # with tools.environment_append(envvars):
-                # command = ('cd %s && buildconf.bat && nmake /f Makefile.msvc %s' \
-                # % (self.ZIP_FOLDER_NAME, nmake_options))
-                # self.run(command)
+        cmake = CMake(self)
+        cmake.definitions["CMAKE_BUILD_TYPE"] = "DEBUG" if self.settings.build_type == "Debug" else "RELEASE"
+        cmake.definitions["CARES_STATIC"] = "OFF" if self.options.shared else "ON"
+        cmake.definitions["CARES_SHARED"] = "OFF" if self.options.shared else "ON"
+        cmake.definitions["CARES_STATIC_PIC"] = "ON"
+        cmake.definitions["CARES_INSTALL"] = "ON"
+        cmake.configure()
+        cmake.build()
+        cmake.patch_config_paths()
 
     def package(self):
         self.copy("FindCARES.cmake", dst=".", src=".", keep_path=False)
@@ -91,17 +50,7 @@ class caresConan(ConanFile):
         self.copy(pattern="*.so*", dst="lib", src="lib", keep_path=False)
         self.copy(pattern="*.a", dst="lib", src="lib", keep_path=False)
 
-        cmake_folder = "{}/cmake/c-ares".format(self.get_install_lib_path())
-        self.copy("c-ares-targets.cmake", dst=".", src=cmake_folder)
-        self.copy("c-ares-targets-{}.cmake".format("debug" if self.settings.build_type == "Debug" else "release"), dst=".", src=cmake_folder)
-
-    def get_install_lib_path(self):
-        install_path = "{}/install".format(self.build_folder)
-        if os.path.isfile("{}/lib/cmake/c-ares/c-ares-targets.cmake".format(install_path)):
-            return "{}/lib".format(install_path)
-        elif os.path.isfile("{}/lib64/cmake/c-ares/c-ares-targets.cmake".format(install_path)):
-            return "{}/lib64".format(install_path)
-        # its "{}/install/{{lib|lib64}}/cmake/gRPC/gRPCTargets.cmake".format(self.build_folder)
+        self.copy("*", dst="lib/cmake/c-ares", src="CMakeFiles/Export/lib/cmake/c-ares")
 
     # def package_info(self):
         # Define the libraries
