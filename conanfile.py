@@ -18,7 +18,7 @@ class caresConan(ConanFile):
     def source(self):
         zip_name = "cares-%s.tar.gz" % self.version.replace(".", "_")
         tools.get("https://github.com/c-ares/c-ares/archive/%s" % zip_name, destination=".")
-        shutil.move(self.ZIP_FOLDER_NAME, "c-ares")
+        shutil.move(self.ZIP_FOLDER_NAME, "cares")
 
     def build(self):
         self.output.info("c-ares build:")

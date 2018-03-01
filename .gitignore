@@ -1,4 +1,9 @@
+# Conan
+conanbuildinfo.txt
+conanbuildinfo.cmake
+conaninfo.txt
+CMakeFiles/
+CMakeCache.txt
 
 *.pyc
 test_package/build
-
