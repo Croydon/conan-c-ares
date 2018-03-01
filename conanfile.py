@@ -9,6 +9,7 @@ class caresConan(ConanFile):
     options = {"shared": [True, False]}
     default_options = "shared=False"
     exports = ["FindCARES.cmake"]
+    exports_sources = ["CMakeLists.txt"]
     url = "https://github.com/Croydon/conan-c-ares"
     license = "https://c-ares.haxx.se/license.html"
     description = "A C library for asynchronous DNS requests"
