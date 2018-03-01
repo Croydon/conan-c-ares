@@ -30,7 +30,7 @@ class caresConan(ConanFile):
         cmake.definitions["CARES_STATIC"] = "OFF" if self.options.shared else "ON"
         cmake.definitions["CARES_SHARED"] = "OFF" if self.options.shared else "ON"
         cmake.definitions["CARES_STATIC_PIC"] = "ON"
-        cmake.definitions["CARES_INSTALL"] = "ON"
+        cmake.definitions["CARES_INSTALL"] = "OFF"
         cmake.configure()
         cmake.build()
         cmake.patch_config_paths()
