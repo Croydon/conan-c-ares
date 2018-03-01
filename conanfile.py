@@ -1,5 +1,4 @@
-from conans import ConanFile, AutoToolsBuildEnvironment, tools, CMake
-import os
+from conans import ConanFile, tools, CMake
 import shutil
 
 class caresConan(ConanFile):
@@ -22,9 +21,6 @@ class caresConan(ConanFile):
         shutil.move(self.ZIP_FOLDER_NAME, "cares")
 
     def build(self):
-        self.output.info("c-ares build:")
-        self.output.info("Shared? %s" % self.options.shared)
-
         cmake = CMake(self)
         cmake.definitions["CMAKE_BUILD_TYPE"] = "DEBUG" if self.settings.build_type == "Debug" else "RELEASE"
         cmake.definitions["CARES_STATIC"] = "OFF" if self.options.shared else "ON"
@@ -37,17 +33,17 @@ class caresConan(ConanFile):
 
     def package(self):
         self.copy("FindCARES.cmake", dst=".", src=".", keep_path=False)
-        self.copy("c-ares-config.cmake", dst=".", src=".", keep_path=False)
-        self.copy("ares_build.h", dst="include", src=".", keep_path=False)
-        self.copy("ares_config.h", dst="include", src=".", keep_path=False)
-        self.copy(pattern="*.h", dst="include", src=self.ZIP_FOLDER_NAME, keep_path=False)
+        self.copy("c-ares-config.cmake", dst=".", src="cares", keep_path=False)
+        self.copy("ares_build.h", dst="include", src="cares", keep_path=False)
+        self.copy("ares_config.h", dst="include", src="cares", keep_path=False)
+        self.copy(pattern="*.h", dst="include", src="cares", keep_path=False)
 
         # Copying static and dynamic libs
-        self.copy(pattern="*.dll", dst="lib", src="bin", keep_path=False)
-        self.copy(pattern="*.dylib", dst="lib", src="lib", keep_path=False)
-        self.copy(pattern="*.lib", dst="lib", src="lib", keep_path=False)
-        self.copy(pattern="*.so*", dst="lib", src="lib", keep_path=False)
-        self.copy(pattern="*.a", dst="lib", src="lib", keep_path=False)
+        self.copy(pattern="*.dll", dst="lib", src="cares/bin", keep_path=False)
+        self.copy(pattern="*.dylib", dst="lib", src="cares/lib", keep_path=False)
+        self.copy(pattern="*.lib", dst="lib", src="cares/lib", keep_path=False)
+        self.copy(pattern="*.so*", dst="lib", src="cares/lib", keep_path=False)
+        self.copy(pattern="*.a", dst="lib", src="cares/lib", keep_path=False)
 
         self.copy("*", dst="lib/cmake/c-ares", src="CMakeFiles/Export/lib/cmake/c-ares")
 
