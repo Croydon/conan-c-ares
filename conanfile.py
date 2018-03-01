@@ -1,7 +1,6 @@
 from conans import ConanFile, AutoToolsBuildEnvironment, tools, CMake
-from conans.tools import download, unzip
 import os
-
+import shutil
 
 class caresConan(ConanFile):
     name = "c-ares"
@@ -18,9 +17,8 @@ class caresConan(ConanFile):
 
     def source(self):
         zip_name = "cares-%s.tar.gz" % self.version.replace(".", "_")
-        download("https://github.com/c-ares/c-ares/archive/%s" % zip_name, zip_name, verify=True)
-        unzip(zip_name)
-        os.unlink(zip_name)
+        tools.get("https://github.com/c-ares/c-ares/archive/%s" % zip_name, destination=".")
+        shutil.move(self.ZIP_FOLDER_NAME, "c-ares")
 
     def build(self):
         self.output.info("c-ares build:")
