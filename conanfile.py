@@ -13,23 +13,22 @@ class caresConan(ConanFile):
     license = "https://c-ares.haxx.se/license.html"
     description = "A C library for asynchronous DNS requests"
     generators = "cmake"
-    ZIP_FOLDER_NAME = "c-ares-cares-%s" % version.replace(".", "_")
+    ZIP_FOLDER_NAME = "c-ares-cares-{}".format(version.replace(".", "_"))
 
     def source(self):
-        zip_name = "cares-%s.tar.gz" % self.version.replace(".", "_")
-        tools.get("https://github.com/c-ares/c-ares/archive/%s" % zip_name, destination=".")
+        zip_name = "cares-{}.tar.gz".format(self.version.replace(".", "_"))
+        tools.get("https://github.com/c-ares/c-ares/archive/{}".format(zip_name), destination=".")
         shutil.move(self.ZIP_FOLDER_NAME, "cares")
 
     def build(self):
         cmake = CMake(self)
         cmake.definitions["CMAKE_BUILD_TYPE"] = "DEBUG" if self.settings.build_type == "Debug" else "RELEASE"
         cmake.definitions["CARES_STATIC"] = "OFF" if self.options.shared else "ON"
-        cmake.definitions["CARES_SHARED"] = "OFF" if self.options.shared else "ON"
+        cmake.definitions["CARES_SHARED"] = "ON" if self.options.shared else "OFF"
         cmake.definitions["CARES_STATIC_PIC"] = "ON"
-        cmake.definitions["CARES_INSTALL"] = "OFF"
+        cmake.definitions["CARES_INSTALL"] = "ON"
         cmake.configure()
         cmake.build()
-        cmake.patch_config_paths()
 
     def package(self):
         self.copy("FindCARES.cmake", dst=".", src=".", keep_path=False)
@@ -37,27 +36,24 @@ class caresConan(ConanFile):
         self.copy("ares_build.h", dst="include", src="cares", keep_path=False)
         self.copy("ares_config.h", dst="include", src="cares", keep_path=False)
         self.copy(pattern="*.h", dst="include", src="cares", keep_path=False)
+        self.copy("*LICENSE*", dst="", keep_path=False)
 
         # Copying static and dynamic libs
-        self.copy(pattern="*.dll", dst="lib", src="cares/bin", keep_path=False)
-        self.copy(pattern="*.dylib", dst="lib", src="cares/lib", keep_path=False)
-        self.copy(pattern="*.lib", dst="lib", src="cares/lib", keep_path=False)
-        self.copy(pattern="*.so*", dst="lib", src="cares/lib", keep_path=False)
-        self.copy(pattern="*.a", dst="lib", src="cares/lib", keep_path=False)
+        self.copy(pattern="*.dll", dst="lib", src="bin", keep_path=False)
+        self.copy(pattern="*.dylib", dst="lib", src="lib", keep_path=False)
+        self.copy(pattern="*.lib", dst="lib", src="lib", keep_path=False)
+        self.copy(pattern="*.so*", dst="lib", src="lib", keep_path=False)
+        self.copy(pattern="*.a", dst="lib", src="lib", keep_path=False)
 
-        self.copy("*", dst="lib/cmake/c-ares", src="CMakeFiles/Export/lib/cmake/c-ares")
+        self.copy("*", dst="lib/cmake/c-ares", src="cares/CMakeFiles/Export/lib/cmake/c-ares")
 
-    # def package_info(self):
-        # Define the libraries
+        tools.replace_in_file("{}/c-ares-config.cmake".format(self.package_folder), '''get_filename_component(PACKAGE_PREFIX_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)''', '''get_filename_component(PACKAGE_PREFIX_DIR "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)''')
+
+        tools.replace_in_file("{}/c-ares-config.cmake".format(self.package_folder), '''include("${CMAKE_CURRENT_LIST_DIR}/c-ares-targets.cmake")''', '''include("${CMAKE_CURRENT_LIST_DIR}/lib/cmake/c-ares/c-ares-targets.cmake")''')
+
+    def package_info(self):
+        self.cpp_info.libs.append("cares")
+        if not self.options.shared:
+            self.cpp_info.defines.append("CARES_STATICLIB")
         # if self.settings.os == "Windows":
-            # self.cpp_info.libs = ['cares'] if self.options.shared else ['libcares']
-            # if self.settings.build_type == "Debug":
-            #     self.cpp_info.libs[0] += "d"
-            # self.cpp_info.libs.append('Ws2_32')
-            # self.cpp_info.libs.append('wsock32')
-        # else:
-            # pass
-
-        # Definitions for static build
-        # if not self.options.shared:
-            # self.cpp_info.defines.append("CARES_STATICLIB=1")
+            # self.cpp_info.libs[0] += "d"

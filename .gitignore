@@ -7,3 +7,4 @@ CMakeCache.txt
 
 *.pyc
 test_package/build
+.ropeproject/
