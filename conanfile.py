@@ -53,7 +53,11 @@ class caresConan(ConanFile):
         tools.replace_in_file("{}/c-ares-config.cmake".format(self.package_folder), '''include("${CMAKE_CURRENT_LIST_DIR}/c-ares-targets.cmake")''', '''include("${CMAKE_CURRENT_LIST_DIR}/lib/cmake/c-ares/c-ares-targets.cmake")''')
 
         # on Fedora 64-bit c-ares builds the lib in the directory lib/ but the generatore cmake file is searching for it
-        tools.replace_in_file("{}/lib/cmake/c-ares/c-ares-targets-release.cmake".format(self.package_folder), "lib64/", "lib/", strict=False)
+        try:
+            tools.replace_in_file("{}/lib/cmake/c-ares/c-ares-targets-release.cmake".format(self.package_folder), "lib64/", "lib/", strict=False)
+            tools.replace_in_file("{}/lib/cmake/c-ares/c-ares-targets-debug.cmake".format(self.package_folder), "lib64/", "lib/", strict=False)
+        except:
+            return
 
     def package_info(self):
         self.cpp_info.libdirs = ["lib", "lib64"]
